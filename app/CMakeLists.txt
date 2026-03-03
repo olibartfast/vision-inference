@@ -16,6 +16,9 @@ message(STATUS "CMAKE_CURRENT_SOURCE_DIR:  ${CMAKE_CURRENT_SOURCE_DIR}")
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/VisionApp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VisionAppProcessing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VisionAppRendering.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VisionAppTaskRouting.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/CommandLineParser.cpp
 )
@@ -45,7 +48,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 # Option to enable unit tests for the app module
 option(ENABLE_APP_TESTS "Enable unit testing for app module" OFF)
-unset(ENABLE_APP_TESTS CACHE) # Clear any previous cache
 
 if(ENABLE_APP_TESTS)
     enable_testing()

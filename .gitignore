@@ -1,5 +1,4 @@
-build
-# Ignore everything in .vscode folder
+build*
 .vscode/*
 # But don't ignore launch.json
 !.vscode/launch.json
@@ -10,3 +9,5 @@ build_tests/
 ros2_ws/log
 ros2_ws/install/
 .cache
+3rdparty/
+data/output/

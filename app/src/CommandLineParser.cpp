@@ -3,19 +3,22 @@
 #include <glog/logging.h>
 #include "utils.hpp"
 
-const std::string CommandLineParser::params = 
+const std::string CommandLineParser::params =
     "{ help h   |   | print help message }"
-    "{ type     |  yolov10 | Object Detection: yolo, yolov4, yolov7e2e, yolov10, yolonas, rtdetr, rtdetrul, rfdetr | Classification: torchvisionclassifier, tensorflowclassifier, vitclassifier, timesformer | Instance Segmentation: yoloseg | Optical Flow: raft }"
+    "{ type     |  yolov10 | Object Detection: yolo, yolov4, yolov7e2e, yolov10, yolonas, rtdetr, rtdetrul, rfdetr | Classification: torchvisionclassifier, tensorflowclassifier, vitclassifier, timesformer | Instance Segmentation: yoloseg | Optical Flow: raft | Pose Estimation: vitpose }"
     "{ source s   | <none>  | path to image or video source}"
     "{ labels lb  |<none>  | path to class labels}"
     "{ weights w  | <none>  | path to models weights}"
     "{ use-gpu   | false  | activate gpu support}"
     "{ min_confidence | 0.25   | optional min confidence}"
+    "{ nms_threshold  | 0.45   | NMS IoU threshold (YOLO-based detectors/segmenters) }"
+    "{ mask_threshold | 0.50   | Mask binarization threshold (instance segmentation) }"
     "{ batch b | 1 | Batch size}"
     "{ input_sizes is | | Input sizes for each model input. Format: CHW;CHW;... (e.g., '3,224,224' for single input or '3,224,224;3,224,224' for two inputs, '3,640,640;2' for rtdetr/dfine models) }"
     "{ warmup     | false  | enable GPU warmup}"
     "{ benchmark  | false  | enable benchmarking}"
-    "{ iterations | 10     | number of iterations for benchmarking}";
+    "{ iterations | 10     | number of iterations for benchmarking}"
+    "{ num_frames nf | 0   | number of frames for video classification (0 = use model default, e.g., 16 for VideoMAE)}";
 
 AppConfig CommandLineParser::parseCommandLineArguments(int argc, char *argv[]) {
     cv::CommandLineParser parser(argc, argv, params);
@@ -36,6 +39,8 @@ AppConfig CommandLineParser::parseCommandLineArguments(int argc, char *argv[]) {
     config.enable_benchmark = parser.get<bool>("benchmark");
     config.benchmark_iterations = parser.get<int>("iterations");
     config.confidenceThreshold = parser.get<float>("min_confidence");
+    config.nmsThreshold = parser.get<float>("nms_threshold");
+    config.maskThreshold = parser.get<float>("mask_threshold");
     config.detectorType = parser.get<std::string>("type");
     config.weights = parser.get<std::string>("weights");
     config.labelsPath = parser.get<std::string>("labels");
@@ -63,6 +68,12 @@ AppConfig CommandLineParser::parseCommandLineArguments(int argc, char *argv[]) {
     }    
     // copy input sizes to config
     config.input_sizes = input_sizes;
+
+    // Parse num_frames for video classification
+    config.num_frames = parser.get<int>("num_frames");
+    if (config.num_frames > 0) {
+        LOG(INFO) << "Using " << config.num_frames << " frames for video classification";
+    }
 
     return config;
 }

@@ -74,7 +74,7 @@ download_with_retry() {
     
     while [[ $retry_count -lt $max_retries ]]; do
         # Use curl for better URL handling (especially for URLs with + characters)
-        if curl -L -o "$output" "$url"; then
+        if curl -L --fail -o "$output" "$url"; then
             return 0
         fi
         retry_count=$((retry_count + 1))
@@ -167,7 +167,8 @@ setup_tensorrt() {
     cd "$temp_dir"
     
     local filename="TensorRT-$version.Linux.x86_64-gnu.cuda-$cuda_version.tar.gz"
-    local url="https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/10.7.0/tars/$filename"
+    local version_short=$(echo "$version" | cut -d. -f1-3)
+    local url="https://developer.nvidia.com/downloads/compute/machine-learning/tensorrt/${version_short}/tars/$filename"
     
     print_status "Downloading TensorRT..."
     if download_with_retry "$url" "$filename"; then

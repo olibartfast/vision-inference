@@ -3,13 +3,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++20](https://img.shields.io/badge/C++-20-blue.svg)](https://isocpp.org/std/the-standard)
 
-C++ framework for computer vision inference, supporting multiple vision tasks and deep learning backends.
+C++ application for computer vision inference, supporting multiple vision tasks and deep learning backends.
 
-> 🚧 Status: Under Development — expect frequent updates. Once the `vision-inference` feature branch is completed, the repository and project references will be renamed accordingly.
-
+> 🚧 Status: Under Development — expect frequent updates.
 ## Key Features
 
-- **Multiple Object Detection Models**: Supported via [vision-core library](https://github.com/olibartfast/vision-core/) (YOLOv4-v12, YOLO26, RT-DETR v1/v2/v4, D-FINE, DEIM v1/v2, RF-DETR)
+- **Multiple Computer Vision Tasks**: Supported via [vision-core library](https://github.com/olibartfast/vision-core/) (Object Detection, Classification, Instance Segmentation, Video Classification, Optical Flow, Pose Estimation, Depth Estimation)
 - **Switchable Inference Backends**: OpenCV DNN, ONNX Runtime, TensorRT, Libtorch, OpenVINO, Libtensorflow (via [neuriplo library](https://github.com/olibartfast/neuriplo/))
 - **Real-time Video Processing**: Multiple video backends via [VideoCapture library](https://github.com/olibartfast/videocapture/) (OpenCV, GStreamer, FFmpeg)
 - **Docker Deployment Ready**: Multi-backend container support
@@ -124,6 +123,8 @@ cmake -DENABLE_APP_TESTS=ON ..
   --labels=<labels_file> \
   --weights=<model_weights> \
   [--min_confidence=<threshold>] \
+  [--nms_threshold=<threshold>] \
+  [--mask_threshold=<threshold>] \
   [--batch|-b=<batch_size>] \
   [--input_sizes|-is='<input_sizes>'] \
   [--use-gpu] \
@@ -135,29 +136,44 @@ cmake -DENABLE_APP_TESTS=ON ..
 #### Required Parameters
 
 - `--type=<model_type>`: Specifies the type of vision model to use. Supported categories:
+  <!-- SUPPORTED_MODEL_TYPES:START -->
+The TaskFactory supports the following model type strings:
 
-  **Object Detection:**
-  - `yolov4`: YOLOv4/YOLOv4-tiny models
-  - `yolo`: YOLOv5, YOLOv6, YOLOv7, YOLOv8, YOLOv9, YOLO11, YOLOv12 models
-  - `yolov10`: YOLOv10 models (different postprocessing)
-  - `yolo26`: YOLO26 models (different postprocessing, i.e. same of yolov10)
-  - `yolonas`: YOLO-NAS models
-  - `rtdetr`: RT-DETR, RT-DETRv2, RT-DETRv4, D-FINE, DEIM, DEIMv2 models
-  - `rtdetrul`: RT-DETR Ultralytics implementation
-  - `rfdetr`: RF-DETR models
+**Object Detection:**
 
-  **Classification:**
-  - `torchvisionclassifier`: TorchVision classification models
-  - `tensorflowclassifier`: TensorFlow classification models
-  - `vitclassifier`: Vision Transformer models
-  - `timesformer`: Video action recognition models
+- `"yolo"`, `"yolov7e2e"`, `"yolov10"`, `"yolo26"`, `"yolov4"` - YOLO-based variants
+- `"yolonas"` - YOLO-NAS
+- `"rtdetr"` - RT-DETR family (RT-DETR v1, v2, and v4; excludes v3; includes D-FINE and DEIM v1/v2)
+- `"rtdetrul"` - RT-DETR (Ultralytics implementation)
+- `"rfdetr"` - RF-DETR
 
-  **Instance Segmentation:**
-  - `yoloseg`: YOLO-based segmentation models
-  - `rfdetr-seg`: RF-DETR-based segmentation models
+**Instance Segmentation:**
+- `"yoloseg"` - YOLOv5/YOLOv8/YOLO11
+- `"yolov10seg"`- YOLOv10
+- `"yolo26seg"` - YOLO26
+- `"rfdetrseg"` - RF-DETR
 
-  **Optical Flow:**
-  - `raft`: RAFT optical flow models
+**Classification:**
+- `"torchvision-classifier"` - Torchvision models (ResNet, EfficientNet, etc.)
+- `"tensorflow-classifier"` - TensorFlow/Keras models
+- `"vit-classifier"` - Vision Transformers
+
+**Video Classification:**
+- `"videomae"` - VideoMAE
+- `"vivit"` - ViViT
+- `"timesformer"` - TimeSformer
+
+**Optical Flow:**
+- `"raft"` - RAFT optical flow
+
+**Pose Estimation:**
+- `"vitpose"` - ViTPose
+
+**Depth Estimation:**
+- `"depth_anything_v2"`, `"depth-anything-v2"` - Depth Anything V2
+
+Canonical copy: [docs/generated/supported-model-types.md](docs/generated/supported-model-types.md).
+<!-- SUPPORTED_MODEL_TYPES:END -->
 
 - `--source=<input_source>`: Defines the input source for the object detection. It can be:
   - A live feed URL, e.g., `rtsp://cameraip:port/stream`
@@ -171,6 +187,10 @@ cmake -DENABLE_APP_TESTS=ON ..
 #### Optional Parameters
 
 - `[--min_confidence=<confidence_value>]`: Sets the minimum confidence threshold for detections. Detections with a confidence score below this value will be discarded. The default value is `0.25`.
+
+- `[--nms_threshold=<iou_value>]`: IoU threshold used for Non-Maximum Suppression in YOLO-based detectors and segmenters. Higher values keep more overlapping boxes. The default value is `0.45`.
+
+- `[--mask_threshold=<value>]`: Binarization threshold applied to predicted masks in instance segmentation models. Pixels above this value are considered foreground. The default value is `0.50`.
 
 - `[--batch | -b=<batch_size>]`: Specifies the batch size for inference. Default value is `1`, inference with batch size bigger than 1 is not currently supported.
 
@@ -224,6 +244,9 @@ cmake -DENABLE_APP_TESTS=ON ..
   --source=video.mp4 \
   --weights=models/yolov8s-seg.onnx \
   --labels=data/coco.names \
+  --min_confidence=0.4 \
+  --nms_threshold=0.5 \
+  --mask_threshold=0.5 \
   --use-gpu
 
 # Optical Flow - RAFT model
@@ -290,6 +313,9 @@ ros2 launch object_detection_ros detection.launch.py \
 - Compatible with standard ROS2 camera drivers (usb_cam, realsense2_camera, etc.)
 
 For complete ROS2 deployment instructions, see the [ROS2 Deployment Guide](docs/ROS2-Deployment.md).
+
+
+For GPU support, add `--gpus all` to the docker run command.
 
 
 ## Additional Resources
